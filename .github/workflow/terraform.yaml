@@ -38,7 +38,7 @@ jobs:
          # terraform_version: 1.6.3
 
       - name: Terraform Init
-        id: init
+        
         run: terraform init -backend-config="bucket=$env.BUCKET_TF_STATE" 
       
       - name: Terraform format

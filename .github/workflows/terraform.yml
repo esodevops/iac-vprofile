@@ -4,14 +4,15 @@ on:
   push:
     branches:
       - main
-      - _stage
+      - stage
     paths:
-      - 'terraform/**'
+      - terraform/**
+
   pull_request:
     branches:
       - main
     paths:
-      - 'terraform/**'
+      - terraform/**
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}

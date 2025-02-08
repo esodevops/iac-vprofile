@@ -1,0 +1,77 @@
+# Nom du workflow qui apparaîtra dans l'interface de GitHub Actions
+name: "Vprofile IAC"
+
+# Définition des événements qui déclencheront le workflow
+on:
+  # Déclenchement lors d'un push sur les branches spécifiées
+  push:
+    # Branches sur lesquelles le push déclenche le workflow
+    branches:
+      - main   # Branche principale
+      - stage  # Branche de staging
+    # Chemins des fichiers qui déclenchent le workflow
+    paths:  
+      - terraform/**  # Tout fichier dans le répertoire terraform
+
+  # Déclenchement lors d'une pull request vers la branche main
+  pull_request:
+    branches:
+      - main  # Branche principale
+    # Chemins des fichiers qui déclenchent le workflow
+    paths:
+      - terraform/**  # Tout fichier dans le répertoire terraform
+
+# Variables d'environnement accessibles dans tout le workflow
+env:
+  # Clés d'accès AWS pour l'authentification
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}  # Récupère la clé d'accès depuis les secrets du dépôt
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}  # Récupère la clé secrète depuis les secrets du dépôt
+  # Bucket S3 pour stocker l'état de Terraform
+  BUCKET_TF_STATE: ${{ secrets.BUCKET_TF_STATE }}  # Récupère le nom du bucket depuis les secrets du dépôt
+  AWS_REGION: us-east-1  # Région AWS où le cluster EKS est déployé
+  EKS_CLUSTER: vprofile-eks  # Nom du cluster EKS
+
+# Définition des jobs à exécuter
+jobs:
+   # Nom du job
+   terraform:
+     name: "Apply terraform code changes"  # Nom du job affiché dans l'interface
+     runs-on: ubuntu-latest  # Environnement d'exécution (Ubuntu)
+
+     # Étapes à exécuter dans ce job
+     steps:
+       # Étape pour récupérer le code source du dépôt
+       - name: Checkout source code 
+         uses: actions/checkout@v4  # Utilise l'action de checkout pour accéder au code
+
+       # Étape pour configurer Terraform sur le runner
+       - name: Setup Terraform with specified version on the runner
+         uses: hashicorp/setup-terraform@v2  # Utilise l'action pour installer Terraform
+         #with:
+         #terraform version : 1.6.3
+
+       # Étape pour initialiser Terraform
+       - name: Terraform init
+         id: init  # Identifiant de l'étape pour référence ultérieure
+         run: terraform init -backend-config="bucket=$BUCKET_TF_STATE"  # Initialise Terraform avec le backend S3 pr stocker l'état
+
+       # Étape pour vérifier le formatage du code Terraform
+       - name: Terraform format
+         id: fmt  # Identifiant de l'étape
+         run: terraform fmt -check  # Vérifie si le code est correctement formaté. Si il n'est pas bien formaté, il renverra un codde de sortie 'non zero' ce qui fera échoué le workflow 
+
+       # Étape pour valider la configuration Terraform
+       - name: Terraform validate
+         id: validate  # Identifiant de l'étape
+         run: terraform validate  # Valide la configuration pour détecter les erreurs
+
+       # Étape pour générer un plan d'exécution Terraform
+       - name: Terraform plan
+         id: plan  # Identifiant de l'étape
+         run: terraform plan -no-color -input=false -out planfile  # Génère un plan sans couleur et sans interaction et on stocke toutes ces info dans un fichier 'planfile' qui sera utilisé pr appliquer les modif
+         continue-on-error: true  # Permet de continuer même si cette étape échoue (pr etre absolument sûr on a une autre étape pr cela)
+
+       # Étape pour vérifier le statut du plan Terraform
+       - name: Terraform plan status
+         if: steps.plan.outcome == 'failure'  # Condition pour exécuter cette étape si le plan a échoué
+         run: exit 1  # Force l'échec du job si le plan a échoué

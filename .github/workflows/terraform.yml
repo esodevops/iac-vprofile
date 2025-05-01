@@ -1,4 +1,4 @@
-name: "iac-app13"
+name: iac-app13
 on:
   push:
     branches:
@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup with specified version on the runner
-        uses: hasicorp/setup-terraform@v2
+        uses: hashicorp/setup-terraform@v2
       # with:
          #terraform_version: 1.6.3
 
@@ -56,7 +56,7 @@ jobs:
         run: terraform plan -no-color -input=false -out planfile
         continue-on-error: true
 
-      - name: Terrafom plan status
+      - name: Terraform plan status
         if: steps.plan.outcome == 'failure'
         run: exit 1
 

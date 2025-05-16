@@ -1,0 +1,107 @@
+# Workflow name
+name: "Vporfile IAC"
+
+# Trigger the workflow on push or pull request to specific branches and paths
+on:
+  push:
+    branches:
+      - main       # Run on push to 'main'
+      - stage      # Run on push to 'stage'
+    paths:
+      - terraform/**  # Only if files in 'terraform/' are changed
+  pull_request:
+    branches:
+      - main       # Run on PR to 'main'
+    paths:
+      - terraform/**  # Only if files in 'terraform/' are affected
+
+# Set environment variables available to all jobs
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}             # AWS access key from secrets
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}     # AWS secret key from secrets
+  BUCKET_TF_STATE: ${{ secrets.BUCKET_TF_STATE }}                 # Terraform backend bucket name from secrets
+  AWS_REGION: us-east-2                                           # AWS region
+  EKS_CLUSTER: vprofile-eks                                       # EKS cluster name
+
+jobs:
+  terraform:
+    name: "Apply terraform code changes"
+    runs-on: ubuntu-latest                                        # Use latest Ubuntu runner
+
+    defaults:
+      run:
+        shell: bash                                               # Use Bash shell
+        working-directory: ./terraform                            # Set working directory for all run steps
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4                                 # Checks out the repo content to the runner
+
+      - name: Setup Terraform with specified version on the runner
+        uses: hashicorp/setup-terraform@v2                        # Installs Terraform CLI
+        # Optional version specification commented out
+        # with:
+        #   terraform_version: 1.6.3
+
+      - name: Terraform init
+        id: init
+        run: terraform init -backend-config="bucket=$BUCKET_TF_STATE"  # Initializes Terraform with backend config
+
+      - name: Terraform format
+        id: fmt
+        run: terraform fmt -recursive                                # Checks formatting of Terraform files
+
+      - name: Terraform validate
+        id: validate
+        run: terraform validate                                   # Validates Terraform configuration
+
+      - name: Terraform plan
+        id: plan
+        run: terraform plan -no-color -input=false -out planfile # Creates an execution plan
+        continue-on-error: true                                  # Allows workflow to continue even if plan fails
+
+      - name: Terraform plan status
+        if: steps.plan.outcome == 'failure'                      # Only run if the plan step failed
+        run: exit 1                                              # Forces a failure in the workflow
+
+      - name: Terraform Apply                 # Descriptive name of the step shown in the Actions UI
+        id: apple                             # Unique ID for this step (can be referenced in later steps)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push' 
+                                        # Conditional execution: only run if the workflow is triggered by a push to the 'main' branch
+        run: terraform apply -auto-approve -input=false -parallelism=1 planfile
+                                        # Executes 'terraform apply' using the saved planfile
+                                        # -auto-approve: Skips interactive approval
+                                        # -input=false: Prevents Terraform from asking for input
+                                        # -parallelism=1: Applies resources one at a time (helps avoid throttling or race conditions)
+                                        # planfile: The plan file generated in the previous step (must exist)
+
+      # Step: Configure AWS credentials using GitHub Actions
+      -  name: Configure AWS credentials
+         uses: aws-actions/configure-aws-credentials@v1
+         with:
+         # AWS access key from GitHub Secrets
+         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+         # AWS secret access key from GitHub Secrets
+         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+         # AWS region from environment variables
+         aws-region: ${{ env.AWS_REGION }}
+
+    # Step: Get Kubernetes config for accessing the EKS cluster
+      -  name: Get Kube config file
+         id: getconfig
+         # Only run this step if the 'apple' step (Terraform Apply) was successful
+         if: steps.apple.outcome == 'success'
+         # Update kubeconfig to access the EKS cluster
+         # NOTE: The '--name' should ideally be the EKS cluster name, not the region
+         run: aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.AWS_REGION }}
+
+    # Step: Install NGINX Ingress Controller into the EKS cluster
+      -  name: Install Ingress controller
+       # Run only if both Terraform Apply and Kubeconfig steps were successful
+         if: steps.apple.outcome == 'success' && steps.getconfig.outcome == 'success'
+         # Apply the Ingress controller manifest from the official GitHub URL
+         run: kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/main/deploy/static/provider/aws/deploy.yaml
+
+
+        
+#

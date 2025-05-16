@@ -1,0 +1,98 @@
+Today
+ehat is used of the commond
+It looks like you might be asking about the use of a command—could you clarify a bit? Are you referring to command-line commands in a computer, commands in programming, or something else entirely? I'm happy to help!
+
+git config core.Ssh coomand "ssh -i ~/.ssh/New_Gitops -F /dev/null"
+It looks like you're trying to configure Git to use a specific SSH command. Your command:
+
+sh
+git config core.sshCommand "ssh -i ~/.ssh/New_Gitops -F /dev/null"
+does the following:
+
+core.sshCommand is a Git configuration setting that specifies a custom SSH command to use for Git operations.
+
+ssh -i ~/.ssh/New_Gitops tells SSH to use the private key New_Gitops located in the ~/.ssh/ directory.
+
+-F /dev/null disables the use of an SSH configuration file by specifying /dev/null (essentially an empty file).
+
+This setup ensures that Git uses the specified SSH key for authentication while ignoring any existing SSH config file that might interfere.
+
+If you're configuring access to a remote Git repository with this, make sure that the corresponding public key (New_Gitops.pub) is added to the server or service (such as GitHub, GitLab, or Bitbucket) to allow authentication.
+
+Let me know if you need any tweaks or explanations! 🚀
+
+key poin only
+Here are the key points of your Git command:
+
+core.sshCommand: Configures Git to use a custom SSH command.
+
+ssh -i ~/.ssh/New_Gitops: Specifies an SSH key for authentication.
+
+-F /dev/null: Ignores the default SSH configuration file.
+
+This ensures Git uses the specified SSH key while bypassing any existing SSH config. 🚀
+
+keypints os the code, this terraform what will do module "vpc" { source = "terraform-aws-modules/vpc/aws" version = "5.1.2" name = "vprofile-eks" cidr = "172.20.0.0/16" azs = slice(data.aws_availability_zones.available.names, 0, 3) private_subnets = ["172.20.1.0/24", "172.20.2.0/24", "172.20.3.0/24"] public_subnets = ["172.20.4.0/24", "172.20.5.0/24", "172.20.6.0/24"] enable_nat_gateway = true single_nat_gateway = true enable_dns_hostnames = true public_subnet_tags = { "kubernetes.io/cluster/${local.cluster_name}" = "shared" "kubernetes.io/role/elb" = 1 } private_subnet_tags = { "kubernetes.io/cluster/${local.cluster_name}" = "shared" "kubernetes.io/role/internal-elb" = 1 } }
+Here are the key points of your Terraform module:
+
+VPC Creation: Defines a Virtual Private Cloud (VPC) using the terraform-aws-modules/vpc/aws module.
+
+CIDR Block: Allocates 172.20.0.0/16 as the VPC's IP range.
+
+Availability Zones: Selects the first three availability zones dynamically.
+
+Subnet Configuration:
+
+Private subnets: 172.20.1.0/24, 172.20.2.0/24, 172.20.3.0/24
+
+Public subnets: 172.20.4.0/24, 172.20.5.0/24, 172.20.6.0/24
+
+NAT Gateway: Enables a single NAT gateway for private subnets.
+
+DNS Hostnames: Allows DNS hostnames within the VPC.
+
+Kubernetes Integration: Tags subnets to associate with an EKS cluster for load balancer (elb) and internal load balancer (internal-elb) roles.
+
+This setup creates a scalable, Kubernetes-ready network environment in AWS. 🚀 Let me know if you need more details!
+
+More keypoint with easy understable with tags
+Here are more key points in a simple format with tags:
+
+📌 VPC Setup
+Creates a VPC (terraform-aws-modules/vpc/aws)
+
+CIDR Block: 172.20.0.0/16 (Defines network range)
+
+Availability Zones: Uses first 3 zones dynamically
+
+🌐 Subnet Configuration
+Private subnets: Used for backend resources
+
+172.20.1.0/24, 172.20.2.0/24, 172.20.3.0/24
+
+Public subnets: Used for internet-facing resources
+
+172.20.4.0/24, 172.20.5.0/24, 172.20.6.0/24
+
+🚀 Network Features
+✅ NAT Gateway: Enables internet access for private subnets
+
+✅ Single NAT Gateway: Saves cost by using one NAT instance
+
+✅ DNS Hostnames: Allows instances to resolve domain names
+
+📌 Kubernetes (EKS) Integration
+Public Subnet Tags:
+
+kubernetes.io/cluster/${local.cluster_name} = shared → Links subnets to Kubernetes cluster
+
+kubernetes.io/role/elb = 1 → Supports external load balancer
+
+Private Subnet Tags:
+
+kubernetes.io/cluster/${local.cluster_name} = shared → Links subnets to Kubernetes cluster
+
+kubernetes.io/role/internal-elb = 1 → Supports internal load balancer
+
+🔹 Purpose
+This setup prepares a Kubernetes-ready VPC with both private and public networking, ensuring proper communication, scalability, and cost-efficient cloud operations.

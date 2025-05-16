@@ -1,0 +1,37 @@
+/*
+
+Workflow Triggers
+Push Events: Runs when changes are pushed to main or stage branches, specifically targeting Terraform files (terraform/**).
+
+Pull Requests: Executes for pull requests to main, ensuring Terraform modifications are validated before merging.
+
+Environment Variables
+AWS Credentials (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY): Stored securely in GitHub secrets for authentication.
+
+Terraform State Storage (BUCKET_TF_STATE): Specifies the S3 bucket used to persist Terraform state.
+
+AWS Configuration (AWS_REGION): Defines the deployment region as us-east-2.
+
+EKS Cluster Reference (EKS_CLUSTER): Sets the target Kubernetes cluster for Terraform provisioning.
+
+Job Execution (terraform)
+Runs on ubuntu-latest: Uses a Linux runner for Terraform execution.
+
+Sets Default Shell & Working Directory: Ensures Terraform commands execute correctly within ./terraform.
+
+Steps Breakdown
+Checkout Repository: Pulls the source code (actions/checkout@v4).
+
+Setup Terraform: Installs Terraform on the runner (hashicorp/setup-terraform@v2).
+
+Initialize Terraform (terraform init): Configures backend storage using the S3 bucket.
+
+Format Check (terraform fmt -check): Ensures code follows Terraform formatting standards.
+
+Validation (terraform validate): Confirms Terraform configuration correctness.
+
+Plan Execution (terraform plan -no-color -input=false -out planfile): Generates an execution plan for resource changes.
+
+Error Handling (steps.plan.outcome == 'failure' → exit 1): Stops execution if planning fails.
+
+*/

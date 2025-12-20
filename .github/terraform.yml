@@ -60,7 +60,7 @@ jobs:
           terraform plan -input=false -out planfile
           continue-on-error: true
       
-      - name: terraform status
+      - name: terraform plan status
         if: steps.plan.outcome == 'failure'
         run: exit 1
 

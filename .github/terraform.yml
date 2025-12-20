@@ -18,7 +18,7 @@ env:
   AWS_DEFAULT_REGION: us-east-1
   BUCKET_TF_STATE: ${{ secrets.BUCKET_TF_STATE }}
 
-  AWS_DEFAULT_REGION: us-east-1
+  
   EKS_CLUSTER: vprofile-eks
 
 jobs:

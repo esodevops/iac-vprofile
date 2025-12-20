@@ -21,7 +21,7 @@ env:
   
   EKS_CLUSTER: vprofile-eks
 
-jobs:
+  jobs:
   terraform:
     name: "Terraform Apply"
     runs-on: ubuntu-latest

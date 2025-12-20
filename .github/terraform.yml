@@ -57,7 +57,7 @@ jobs:
       - name: Terraform plan
         id: plan #for referencing later if needed
         run: |
-          terraform plan -input=false -out planfile
+          terraform plan -input=false -out=tfplan
           continue-on-error: true
       
       - name: terraform plan status

@@ -59,4 +59,8 @@ jobs:
        - name: Terraform plan status
          if: steps.plan.outcome == 'failure' 
          run: exit 1     
-##################
+################################
+      #  - name: Terraform apply
+      #    if: github.ref == 'refs/heads/main' && steps.plan.outcome == 'success'
+      #    id: apply
+      #    run: terraform apply -input=false -auto-approve planfile

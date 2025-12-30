@@ -4,7 +4,7 @@ provider "kubernetes" {
 }
 
 provider "aws" {
-  region = var.region # This tells that terraform have to use AWS cloud provider
+  region = var.region # This tells that terraform have to use AWS cloud provider 
 }
 
 data "aws_availability_zones" "available" {}

@@ -32,8 +32,9 @@ terraform { # This is the main configuration for Terraform itself.
     region = "us-east-2"
   }
 
-  required_version = "~> 1.6.3"
+  required_version = ">= 1.0.0"
 }
+# comment
 
 /*
 === TERRAFORM.TF FILE EXPLANATION ===

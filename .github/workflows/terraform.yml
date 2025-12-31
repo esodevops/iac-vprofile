@@ -71,8 +71,8 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   # S3 bucket for storing the tf state file
   BUCKET_TF_STATE: ${{ secrets.BUCKET_TF_STATE }}
-  AWS_REGION: us-east-2
-  EKS_CLUSTER: vprofile-eks
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  EKS_CLUSTER: ${{ secrets.EKS_CLUSTER }}
 
 jobs:
   terraform:
@@ -99,7 +99,6 @@ jobs:
         id: fmt
         run: terraform fmt -check # check for fmt whether it is correct or not, if not correct returns a non-zero exit code which will fail the workflow
 
-
       - name: Terraform validate
         id: validate
         run: terraform validate
@@ -123,12 +122,12 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: $AWS_REGION
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Get Kube config file
         id: getconfig
         if: steps.apply.outcome == 'success'
-        run: aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
+        run: aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER }} 
 
       - name: Install Ingress controller
         if: steps.apply.outcome == 'success' && steps.getconfig.outcome == 'success'

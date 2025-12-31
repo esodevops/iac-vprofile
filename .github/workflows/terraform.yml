@@ -36,6 +36,13 @@ jobs:
       uses: hashicorp/setup-terraform@v2
       # with: If we don't mention the version so it uses the latest version of terraform
       #   terraform_version: "1.1.7"
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-2
 
     - name: Terraform Init
       id: init
@@ -43,7 +50,7 @@ jobs:
 
     - name: Terraform format
       id: fmt 
-      run: terraform fmt -check
+      run: terraform fmt -check -diff -recursive
 
     - name: Terraform validate
       id: validate

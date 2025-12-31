@@ -27,7 +27,7 @@ terraform { # This is the main configuration for Terraform itself.
   }
 
   backend "s3" { # This is the S3 bucket that Terraform will use to store its state
-    bucket = "vprofileactions23"
+    bucket = "gitopsproject23"
     key    = "terraform.tfstate"
     region = "us-east-2"
   }
@@ -35,7 +35,7 @@ terraform { # This is the main configuration for Terraform itself.
   required_version = ">= 1.0.0"
 }
 # comment
-##
+###
 
 /*
 === TERRAFORM.TF FILE EXPLANATION ===

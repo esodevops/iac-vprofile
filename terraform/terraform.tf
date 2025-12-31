@@ -1,4 +1,4 @@
-terraform { # This is the main configuration for Terraform itself.
+terraform {            # This is the main configuration for Terraform itself.
   required_providers { #  Declares which providers (plugins) Terraform will use and their versions.
     aws = {
       source  = "hashicorp/aws"
@@ -10,7 +10,7 @@ terraform { # This is the main configuration for Terraform itself.
       version = "~> 3.5.1"
     }
 
-    tls = { # Two end points ke bich me secure communication ke liye use karte h
+    tls = {                     # Two end points ke bich me secure communication ke liye use karte h
       source  = "hashicorp/tls" # Example - iss code me terraform or s3 bucket ke secure communication me use kiya hoga
       version = "~> 4.0.4"
     }
@@ -35,7 +35,7 @@ terraform { # This is the main configuration for Terraform itself.
   required_version = ">= 1.0"
 }
 # comment
-##########
+###########
 
 /*
 === TERRAFORM.TF FILE EXPLANATION ===

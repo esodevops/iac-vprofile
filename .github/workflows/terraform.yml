@@ -14,17 +14,10 @@ on:
       - terraform/**
 
 env:
-  # 🔐 AWS credentials (DO NOT hardcode)
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-
-  # 🪣 S3 bucket for Terraform state
   BUCKET_TF_STATE: ${{ secrets.BUCKET_TF_STATE }}
-
-  # 🌍 AWS region
   AWS_REGION: us-east-1
-
-  # ☸️ EKS cluster name
   EKS_CLUSTER: vprofile-eks
 
 jobs:
@@ -41,14 +34,24 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
+      # ✅ FIX 1: Pin correct Terraform version
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
-       # with:
-         # terraform_version: 1.6.3
+        with:
+          terraform_version: 1.6.3
 
+      # ✅ Optional but recommended (debug clarity)
+      - name: Check Terraform version
+        run: terraform version
+
+      # ✅ FIX 2: Proper backend config
       - name: Terraform Init
         id: init
-        run: terraform init -backend-config="bucket=$BUCKET_TF_STATE"
+        run: |
+          terraform init \
+            -backend-config="bucket=${BUCKET_TF_STATE}" \
+            -backend-config="key=terraform.tfstate" \
+            -backend-config="region=${AWS_REGION}"
 
       - name: Terraform format
         id: fmt

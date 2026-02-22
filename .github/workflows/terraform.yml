@@ -94,7 +94,7 @@ jobs:
         # Allows workflow to continue so we can manually handle failure
         continue-on-error: true
 
-      # Step 7: Fail the workflow if Terraform plan fails
+      ## Step 7: Fail the workflow if Terraform plan fails
       # Ensures broken infrastructure code does not pass CI
       - name: Terraform plan status
         if: steps.plan.outcome == 'failure' 

@@ -1,3 +1,4 @@
+# Terraform variables for EKS cluster deployment
 variable "region" {
   description = "AWS region"
   type        = string

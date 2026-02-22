@@ -58,7 +58,7 @@ jobs:
 
       # Step 2: Install and configure Terraform CLI on the runner
       - name: Setup Terraform with specified version on the runner
-        uses: hashicorp/setup-terraform@v4
+        uses: hashicorp/setup-terraform@v2
         # Optional: Uncomment to pin a specific Terraform version
         # with:
         #   terraform_version: 1.6.3

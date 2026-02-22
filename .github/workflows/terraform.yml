@@ -1,0 +1,101 @@
+
+# Workflow name shown in GitHub Actions UI
+name: "Vprofile IAC"
+
+# Trigger conditions for the workflow
+on:
+  # Run workflow when code is pushed to these branches
+  push:
+    branches:
+      - main
+      - stage
+    # Only trigger when Terraform files change
+    paths:  
+      - terraform/**
+
+  # Run workflow on pull requests targeting main branch
+  pull_request:
+    branches:
+      - main
+    # Only if Terraform files are modified
+    paths:
+      - terraform/**
+
+# Environment variables available to all jobs
+env:
+  # AWS credentials stored securely in GitHub Secrets
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+  # S3 bucket used to store Terraform remote state
+  BUCKET_TF_STATE: ${{ secrets.BUCKET_TF_STATE}}
+
+  # AWS region where infrastructure will be deployed
+  AWS_REGION: us-east-2
+
+  # Target EKS cluster name (used by Terraform or later stages)
+  EKS_CLUSTER: vprofile-eks
+
+jobs:
+  terraform:
+    # Job name displayed in the Actions tab
+    name: "Apply terraform code changes"
+
+    # Runner environment (GitHub-hosted Ubuntu VM)
+    runs-on: ubuntu-latest
+
+    # Default shell and working directory for all run steps
+    defaults:
+      run:
+        shell: bash
+        # Navigate into terraform folder where IaC code exists
+        working-directory: ./terraform
+
+    steps:
+      # Step 1: Download the repository code to the runner
+      - name: Checkout source code 
+        uses: actions/checkout@v4
+
+      # Step 2: Install and configure Terraform CLI on the runner
+      - name: Setup Terraform with specified version on the runner
+        uses: hashicorp/setup-terraform@v4
+        # Optional: Uncomment to pin a specific Terraform version
+        # with:
+        #   terraform_version: 1.6.3
+
+      # Step 3: Initialize Terraform
+      # - Downloads providers
+      # - Configures backend (S3 remote state)
+      # - Prepares working directory for Terraform operations
+      - name: Terraform init
+        id: init
+        run: terraform init -backend-config="bucket=$BUCKET_TF_STATE"
+
+      # Step 4: Check Terraform code formatting
+      # Fails if formatting does not follow Terraform standards
+      - name: Terraform format
+        id: fmt
+        run: terraform fmt -check
+
+      # Step 5: Validate Terraform configuration syntax and structure
+      # Ensures code is logically valid before planning/applying
+      - name: Terraform validate
+        id: validate
+        run: terraform validate
+
+      # Step 6: Generate execution plan
+      # Shows what infrastructure changes Terraform will make
+      # -no-color: cleaner logs
+      # -input=false: disables interactive prompts (CI safe)
+      # -out planfile: saves the plan for potential apply stage
+      - name: Terraform plan
+        id: plan
+        run: terraform plan -no-color -input=false -out planfile
+        # Allows workflow to continue so we can manually handle failure
+        continue-on-error: true
+
+      # Step 7: Fail the workflow if Terraform plan fails
+      # Ensures broken infrastructure code does not pass CI
+      - name: Terraform plan status
+        if: steps.plan.outcome == 'failure' 
+        run: exit 1
